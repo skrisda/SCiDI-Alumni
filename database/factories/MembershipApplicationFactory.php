@@ -22,6 +22,7 @@ class MembershipApplicationFactory extends Factory
         return [
             'user_id' => User::factory(),
             'membership_type' => 'ordinary',
+            'ordinary_category' => 'graduate',
             'prefix' => 'นาย',
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -31,7 +32,6 @@ class MembershipApplicationFactory extends Factory
             'address' => fake()->address(),
             'phone' => '0812345678',
             'email' => fake()->safeEmail(),
-            'qualification' => 'สำเร็จการศึกษาจากคณะวิทยาศาสตร์',
             'fee_amount' => 100,
             'status' => 'pending_review',
             'payment_status' => 'awaiting_payment',

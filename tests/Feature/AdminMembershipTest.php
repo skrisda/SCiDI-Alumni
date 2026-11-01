@@ -46,10 +46,10 @@ test('registrars see applicant details but cannot download payment evidence', fu
 
 test('treasurers see payment details without exposing applicant identity and contact data', function () {
     Storage::fake('local');
-    $application = MembershipApplication::factory()->create(['address' => 'ที่อยู่ห้ามแสดงฝ่ายการเงิน', 'qualification' => 'คุณสมบัติเฉพาะนายทะเบียน', 'slip_path' => 'private/slip.pdf']);
+    $application = MembershipApplication::factory()->create(['address' => 'ที่อยู่ห้ามแสดงฝ่ายการเงิน', 'slip_path' => 'private/slip.pdf']);
     Storage::disk('local')->put($application->slip_path, 'private evidence');
     $this->actingAs(User::factory()->withRole(AdminRole::Treasurer)->create())
-        ->get(route('admin.memberships.show', $application))->assertOk()->assertSee('ข้อมูลสำหรับฝ่ายการเงิน')->assertDontSee($application->address)->assertDontSee($application->qualification)->assertDontSee($application->email)->assertDontSee($application->phone);
+        ->get(route('admin.memberships.show', $application))->assertOk()->assertSee('ข้อมูลสำหรับฝ่ายการเงิน')->assertDontSee($application->address)->assertDontSee($application->email)->assertDontSee($application->phone);
     $this->get(route('admin.memberships.slip', $application))->assertOk()->assertDownload();
 });
 

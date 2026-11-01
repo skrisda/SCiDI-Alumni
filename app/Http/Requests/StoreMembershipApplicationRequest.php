@@ -17,14 +17,17 @@ class StoreMembershipApplicationRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        $isEmployee = $this->input('membership_type') === 'ordinary' && in_array($this->input('ordinary_category'), ['lecturer', 'staff'], true);
+
         return [
             'membership_type' => ['required', Rule::in(array_keys(MembershipApplication::TYPES))],
+            'ordinary_category' => ['exclude_unless:membership_type,ordinary', 'required', Rule::in(array_keys(MembershipApplication::ORDINARY_CATEGORIES))],
             'prefix' => ['required', Rule::in(['นาย', 'นาง', 'นางสาว', 'other'])],
             'prefix_other' => ['exclude_unless:prefix,other', 'required', 'string', 'max:50'],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'student_code' => ['nullable', 'string', 'max:30'],
-            'program' => ['required', 'string', 'max:255'],
+            'student_code' => [Rule::excludeIf($isEmployee), 'nullable', 'string', 'max:30'],
+            'program' => [Rule::excludeIf($isEmployee), 'required', 'string', 'max:255'],
             'nickname' => ['nullable', 'string', 'max:100'],
             'national_id' => ['bail', 'required', 'regex:/^[0-9]{13}$/', function (string $attribute, mixed $value, Closure $fail): void {
                 $sum = 0;
@@ -40,7 +43,6 @@ class StoreMembershipApplicationRequest extends FormRequest
             }],
             'address' => ['required', 'string', 'max:2000'],
             'phone' => ['required', 'regex:/^[0-9+()\s-]{9,30}$/'],
-            'qualification' => ['required', 'string', 'max:2000'],
             'acknowledged' => ['accepted'],
         ];
     }
@@ -48,12 +50,12 @@ class StoreMembershipApplicationRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return ['required' => 'กรุณากรอก:attribute', 'string' => ':attributeต้องเป็นข้อความ', 'max' => ':attributeยาวเกินกำหนด', 'regex' => 'รูปแบบ:attributeไม่ถูกต้อง', 'prefix.in' => 'กรุณาเลือกคำนำหน้าจากรายการ', 'in' => 'กรุณาเลือกประเภทสมาชิกที่เปิดรับสมัคร', 'accepted' => 'กรุณายืนยันว่าได้อ่านข้อบังคับและรับทราบการใช้ข้อมูล'];
+        return ['required' => 'กรุณากรอก:attribute', 'string' => ':attributeต้องเป็นข้อความ', 'max' => ':attributeยาวเกินกำหนด', 'regex' => 'รูปแบบ:attributeไม่ถูกต้อง', 'ordinary_category.in' => 'กรุณาเลือกประเภทสมาชิกสามัญที่ถูกต้อง', 'prefix.in' => 'กรุณาเลือกคำนำหน้าจากรายการ', 'in' => 'กรุณาเลือกประเภทสมาชิกที่เปิดรับสมัคร', 'accepted' => 'กรุณายืนยันว่าได้อ่านข้อบังคับและรับทราบการใช้ข้อมูล'];
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['membership_type' => 'ประเภทสมาชิก', 'prefix' => 'คำนำหน้า', 'prefix_other' => 'คำนำหน้าเพิ่มเติม', 'first_name' => 'ชื่อ', 'last_name' => 'นามสกุล', 'student_code' => 'รหัสนิสิต', 'program' => 'หลักสูตร', 'nickname' => 'ชื่อเล่น', 'national_id' => 'เลขประจำตัวประชาชน', 'address' => 'ที่อยู่', 'phone' => 'เบอร์โทรศัพท์', 'qualification' => 'คุณสมบัติผู้สมัคร'];
+        return ['membership_type' => 'ประเภทสมาชิก', 'ordinary_category' => 'ประเภทสมาชิกสามัญ', 'prefix' => 'คำนำหน้า', 'prefix_other' => 'คำนำหน้าเพิ่มเติม', 'first_name' => 'ชื่อ', 'last_name' => 'นามสกุล', 'student_code' => 'รหัสนิสิต', 'program' => 'หลักสูตร', 'nickname' => 'ชื่อเล่น', 'national_id' => 'เลขประจำตัวประชาชน', 'address' => 'ที่อยู่', 'phone' => 'เบอร์โทรศัพท์'];
     }
 }

@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -13,6 +14,7 @@ function membershipApplicationData(): array
 {
     return [
         'membership_type' => 'ordinary',
+        'ordinary_category' => 'graduate',
         'prefix' => 'นาย',
         'first_name' => 'ทดสอบ',
         'last_name' => 'ระบบ',
@@ -20,7 +22,6 @@ function membershipApplicationData(): array
         'national_id' => '1101700207030',
         'address' => '222 จังหวัดพัทลุง',
         'phone' => '0812345678',
-        'qualification' => 'สำเร็จการศึกษาจากคณะวิทยาศาสตร์',
         'acknowledged' => '1',
     ];
 }
@@ -134,4 +135,45 @@ test('single account names leave the surname empty for the applicant to complete
         ->assertOk()
         ->assertViewHas('defaultFirstName', 'สมชาย')
         ->assertViewHas('defaultLastName', '');
+});
+
+test('ordinary employees can apply without academic fields and forged academic values are discarded', function (string $category) {
+    $data = membershipApplicationData();
+    $data['ordinary_category'] = $category;
+    $data['student_code'] = 'should-not-be-saved';
+    unset($data['program']);
+    $this->actingAs(User::factory()->create())->post(route('membership.application.store'), $data)->assertSessionHasNoErrors();
+    $application = MembershipApplication::sole();
+    expect($application->ordinary_category)->toBe($category)->and($application->program)->toBeNull()->and($application->student_code)->toBeNull();
+})->with(['lecturer', 'staff']);
+
+test('ordinary graduates must provide a program and all ordinary applicants need a valid category', function () {
+    $this->actingAs(User::factory()->create());
+    $data = membershipApplicationData();
+    unset($data['program']);
+    $this->post(route('membership.application.store'), $data)->assertSessionHasErrors('program');
+    $data = membershipApplicationData();
+    $data['ordinary_category'] = 'invalid';
+    $this->post(route('membership.application.store'), $data)->assertSessionHasErrors('ordinary_category');
+    unset($data['ordinary_category']);
+    $this->post(route('membership.application.store'), $data)->assertSessionHasErrors('ordinary_category');
+});
+
+test('non ordinary members cannot use employee category to bypass program requirements', function () {
+    $this->actingAs(User::factory()->create());
+    $data = membershipApplicationData();
+    $data['membership_type'] = 'extraordinary';
+    $data['ordinary_category'] = 'lecturer';
+    unset($data['program']);
+    $this->post(route('membership.application.store'), $data)->assertSessionHasErrors('program');
+    $data['program'] = 'หลักสูตรทดสอบ';
+    $this->post(route('membership.application.store'), $data)->assertSessionHasNoErrors();
+    expect(MembershipApplication::sole()->ordinary_category)->toBeNull();
+});
+
+test('removed qualification field is not displayed or accepted from forged submissions', function () {
+    $this->actingAs(User::factory()->create())->get(route('membership.application'))->assertOk()->assertDontSee('name="qualification"', false);
+    $this->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['qualification' => 'ข้อมูลที่ไม่ควรรับ']))->assertSessionHasNoErrors();
+    expect(Schema::hasColumn('membership_applications', 'qualification'))->toBeFalse();
+    expect(MembershipApplication::sole()->getAttributes())->not->toHaveKey('qualification');
 });

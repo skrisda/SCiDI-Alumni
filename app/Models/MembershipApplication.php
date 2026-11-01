@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'membership_type', 'prefix', 'first_name', 'last_name', 'student_code', 'program', 'nickname', 'national_id', 'national_id_hash', 'address', 'phone', 'email', 'qualification', 'fee_amount', 'status', 'slip_path', 'payment_status'])]
+#[Fillable(['user_id', 'membership_type', 'ordinary_category', 'prefix', 'first_name', 'last_name', 'student_code', 'program', 'nickname', 'national_id', 'national_id_hash', 'address', 'phone', 'email', 'fee_amount', 'status', 'slip_path', 'payment_status'])]
 #[Hidden(['national_id', 'national_id_hash', 'slip_path'])]
 class MembershipApplication extends Model
 {
@@ -18,6 +18,9 @@ class MembershipApplication extends Model
 
     /** @var array<string, string> */
     public const TYPES = ['ordinary' => 'สมาชิกสามัญ', 'extraordinary' => 'สมาชิกวิสามัญ', 'associate' => 'สมาชิกสมทบ'];
+
+    /** @var array<string, string> */
+    public const ORDINARY_CATEGORIES = ['graduate' => 'ผู้สำเร็จการศึกษา', 'lecturer' => 'อาจารย์', 'staff' => 'บุคลากร'];
 
     protected function casts(): array
     {

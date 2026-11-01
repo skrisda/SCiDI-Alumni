@@ -56,3 +56,24 @@ if (prefixSelect) {
     prefixSelect.addEventListener('change', updatePrefixField);
     updatePrefixField();
 }
+
+const membershipType = document.getElementById('membership_type');
+const ordinaryCategory = document.getElementById('ordinary_category');
+if (membershipType && ordinaryCategory) {
+    const updateMembershipFields = () => {
+        const isOrdinary = membershipType.value === 'ordinary';
+        document.getElementById('ordinary-category-field').hidden = !isOrdinary;
+        ordinaryCategory.disabled = !isOrdinary;
+        ordinaryCategory.required = isOrdinary;
+        const isEmployee = isOrdinary && ['lecturer', 'staff'].includes(ordinaryCategory.value);
+        document.querySelectorAll('[data-academic-field]').forEach((field) => {
+            const input = field.querySelector('input');
+            field.hidden = isEmployee;
+            input.disabled = isEmployee;
+            input.required = !isEmployee && input.name === 'program';
+        });
+    };
+    membershipType.addEventListener('change', updateMembershipFields);
+    ordinaryCategory.addEventListener('change', updateMembershipFields);
+    updateMembershipFields();
+}

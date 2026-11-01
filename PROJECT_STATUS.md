@@ -1,8 +1,8 @@
 # สถานะโปรเจกต์ SciDI–TSU AA
 
-อัปเดต: 1 พฤศจิกายน 2569 (2026-11-01) เวลาอ้างอิง Asia/Bangkok
+อัปเดต: 1 พฤศจิกายน 2569 (2026-11-01) — รวมการลบ qualification และนำช่องอีเมลออกจากแบบสมัครแล้ว; เวลาอ้างอิง Asia/Bangkok
 
-เอกสารนี้ใช้ส่งต่องานไปยังเครื่องอื่นหรือแชตใหม่ สรุปสถานะจากโค้ดและงานในบทสนทนาถึงวันที่ระบุ ไม่ใช่สำเนาประวัติแชตทั้งหมด และไม่บรรจุค่าลับจาก `.env`
+เอกสารนี้ใช้ส่งต่องานไปยังเครื่องอื่นหรือแชตใหม่ สรุปสถานะจากโค้ดและงานในบทสนทนาถึงวันที่ระบุ ไม่ใช่สำเนาประวัติแชตทั้งหมด และไม่บรรจุค่าลับจาก `.env` ไฟล์นี้อัปเดตตามคำขอ ไม่ได้ซิงก์กับโค้ดอัตโนมัติ
 
 ## เริ่มอ่านเมื่อรับช่วงงาน
 
@@ -59,7 +59,7 @@
 - `resources/views/layouts/auth.blade.php`: layout Auth; หน้าสร้างบัญชีมีโครงของตนเองผ่าน public layout
 - `resources/views/dashboard.blade.php`: ภาพรวมบัญชีและทางลัด
 - `resources/css/landing.css`: styles ของหน้าสาธารณะ บัญชี สมาชิก และ Admin มี override ต่อท้ายหลายช่วง
-- `resources/js/app.js`: ตัวควบคุมขนาดฟอนต์และช่องคำนำหน้าอื่น ๆ
+- `resources/js/app.js`: ตัวควบคุมขนาดฟอนต์ ช่องคำนำหน้าอื่น ๆ และการแสดงช่องตามประเภทย่อยสมาชิกสามัญ
 - `resources/views/pages/settings/layout.blade.php`: รับ `showSidebar`; หน้าหลักทั้งสามส่ง `false` เพื่อไม่ให้ sidebar ซ้อน
 
 ข้อผิดพลาดที่เคยแก้: อย่าใช้ `request()->routeIs('profile.edit')` ภายในฟอร์มเพื่อเลือกว่าแสดง sidebar หรือไม่ เพราะหลัง Livewire update route จะเปลี่ยนเป็น update endpoint ให้ใช้ prop ที่ชัดเจนแทน
@@ -88,10 +88,16 @@
 
 ไฟล์: `MembershipApplication` model, `MembershipApplicationController`, `StoreMembershipApplicationRequest`, `StoreMembershipSlipRequest` และ `resources/views/membership-application.blade.php`
 
-- เก็บคำนำหน้า ชื่อ นามสกุล รหัสนิสิตไม่บังคับ หลักสูตรแบบ textbox ชื่อเล่นไม่บังคับ เลขประชาชน ที่อยู่ โทรศัพท์ อีเมล และคุณสมบัติประกอบการสมัคร
+- เก็บคำนำหน้า ชื่อ นามสกุล รหัสนิสิตไม่บังคับ หลักสูตรแบบ textbox ตามเงื่อนไขด้านล่าง ชื่อเล่นไม่บังคับ เลขประชาชน ที่อยู่ โทรศัพท์ และอีเมลที่ดึงจากบัญชี
+- สมาชิกสามัญต้องเลือก `ordinary_category`: `graduate` ผู้สำเร็จการศึกษา / `lecturer` อาจารย์ / `staff` บุคลากร
+- เลือกอาจารย์หรือบุคลากร: ซ่อนและ disable ช่องรหัสนิสิตกับหลักสูตร ไม่บังคับกรอก และฝั่งเซิร์ฟเวอร์ exclude ค่าทั้งสองแม้มีการปลอมส่งมา
+- ผู้สำเร็จการศึกษายังต้องระบุหลักสูตร ส่วนรหัสนิสิตไม่บังคับ ประเภทอื่นยังใช้กฎหลักสูตรเดิมและไม่บันทึก ordinary_category
+- `program` เปลี่ยนเป็น nullable เพื่อรองรับอาจารย์/บุคลากร ส่วนคำขอเดิมไม่ถูกเดาประเภทย่อยให้
+- ยกเลิกช่องและลบคอลัมน์ `qualification` แล้ว รวมทั้งการอ้างอิงใน Model, Factory และหน้า Admin ไม่ต้องเพิ่มกลับ; ข้อมูลเดิมในคอลัมน์นี้ถูกลบตามคำขอผู้ใช้
 - คำนำหน้าเลือก นาย/นาง/นางสาว/อื่น ๆ; เลือกอื่น ๆ ต้องกรอกเพิ่ม โดยบันทึกข้อความจริงใน `prefix`
 - ชื่อและนามสกุลอยู่แถวเดียวกัน เติมจากชื่อบัญชีโดยแยกตามช่องว่างแรก แก้ไขได้ และข้อมูลที่กรอกไว้มีลำดับเหนือค่าเริ่มต้นเมื่อ validation ไม่ผ่าน
-- อีเมลคำขอมาจากบัญชีที่ยืนยันแล้ว ไม่รับค่าที่ปลอมส่งมาจากฟอร์ม
+- ไม่มีช่องอีเมลในแบบสมัครแล้ว อีเมลคำขอมาจากบัญชีที่เข้าสู่ระบบและยืนยันแล้ว ไม่รับค่าที่ปลอมส่งมาจากฟอร์ม หลังส่งคำขอจะแสดงอีเมลที่ใช้ยื่นในหน้าสรุป
+- ปรับ checkbox รับทราบให้ตรงกับข้อความบรรทัดแรก โดยแก้ขนาด/min-height แยกจาก input ข้อความ
 - หนึ่งบัญชีมีหนึ่งคำขอ และเลขประชาชนหนึ่งหมายเลขมีหนึ่งคำขอ
 - ตรวจเลขประชาชน 13 หลักและ checksum; เก็บด้วย encrypted cast และ HMAC hash สำหรับตรวจซ้ำ
 - `bootstrap/app.php` ป้องกัน flash เลขประชาชนกลับ session เมื่อ validation ไม่ผ่าน
@@ -153,6 +159,7 @@ php artisan admin:grant user@example.com --role=member --no-interaction
 
 - สมาชิก 4 ประเภท: กิตติมศักดิ์ สามัญ วิสามัญ สมทบ
 - สามัญตลอดชีพ 100 บาท วิสามัญตลอดชีพ 300 บาท กิตติมศักดิ์ยกเว้น ยังไม่พบอัตราสมทบในข้อ 7.4
+- คุณสมบัติตามข้อบังคับยังต้องตรวจโดยเจ้าหน้าที่ แม้เอาช่องข้อความคุณสมบัติออกแล้ว
 - รับรองโดยนายทะเบียนและเลขานุการ เสนอคณะกรรมการพิจารณา แจ้งผล และชำระค่าบำรุงครบก่อนสมาชิกภาพสมบูรณ์
 - รายงานประชุมให้เลขานุการบันทึกและประธานลงนามรับรอง
 
@@ -163,15 +170,22 @@ migration ที่เพิ่มและรันใน MySQL เครื่
 1. `2026_11_01_115423_create_membership_applications_table.php`
 2. `2026_11_01_121822_add_admin_role_to_users_table.php`
 3. `2026_11_01_123002_move_admin_roles_to_roles_table.php`
+4. `2026_11_01_143722_add_ordinary_category_to_membership_applications_table.php`
+5. `2026_11_01_144052_make_qualification_nullable_on_membership_applications_table.php`
+6. `2026_11_01_144215_drop_qualification_from_membership_applications_table.php`
+
+migration หมายเลข 5 เป็นขั้นเปลี่ยนผ่าน ก่อนหมายเลข 6 ลบ qualification จริง การ rollback หมายเลข 6 สร้างได้เฉพาะคอลัมน์ว่าง ไม่กู้ข้อมูลที่ลบไปแล้ว ต้องเก็บ migrations เก่าไว้ให้ติดตั้งฐานข้อมูลใหม่ได้ตามลำดับ
 
 migration หมายเลข 2 เป็นประวัติ schema ไม่ใช่ schema ปัจจุบัน หมายเลข 3 ย้ายไป many-to-many และจะปฏิเสธ rollback เมื่อมีผู้ใช้หลายสิทธิ์ เพื่อไม่ให้ข้อมูลสิทธิ์หายจากการลดกลับเป็นหนึ่งสิทธิ์
 
 ผลตรวจล่าสุดก่อนสร้างเอกสารนี้:
 
-- `MembershipApplicationTest` และ `AdminMembershipTest` รวมผ่าน 30 กรณี 173 assertions
-- PHPStan ของไฟล์ที่เกี่ยวข้องกับการย้าย roles ผ่าน
+- `MembershipApplicationTest` และ `AdminMembershipTest` รวมผ่าน 35 กรณี 195 assertions หลังลบ qualification
+- หลังนำช่องอีเมลออก รัน `MembershipApplicationTest` ซ้ำผ่าน 19 กรณี 85 assertions
+- `Auth/RegistrationTest` ผ่าน 4 กรณี 13 assertions หลังแก้รหัสผ่าน โดยมีการทดสอบเงื่อนไข Production แบบ mock การตรวจรหัสผ่านรั่วไหล ไม่เรียกบริการภายนอก
+- PHPStan ของไฟล์ที่เกี่ยวข้องกับการย้าย roles ผ่าน และ Model/Form Request ที่แก้ประเภทย่อยสมาชิกผ่าน
 - Pint และ Blade compilation ผ่าน
-- Build frontend ผ่านในงาน UI ล่าสุด; งานย้าย roles เปลี่ยน backend/ข้อความ Blade เป็นหลัก
+- Build frontend ผ่านหลังเพิ่มประเภทย่อยและแก้ checkbox; งานนำช่องอีเมลออกตรวจ Blade compilation แล้ว ไม่มีการเปลี่ยน asset
 - ยังไม่ได้รันทดสอบทั้ง suite จึงไม่ควรกล่าวว่าทั้งโปรเจกต์ผ่านทั้งหมด
 - งานหน้าตาส่วนใหญ่ยังไม่มีการตรวจภาพจริงผ่านเบราว์เซอร์อย่างครบถ้วน
 
@@ -179,6 +193,7 @@ migration หมายเลข 2 เป็นประวัติ schema ไ�
 
 ```bash
 php artisan test --compact tests/Feature/AdminMembershipTest.php tests/Feature/MembershipApplicationTest.php
+php artisan test --compact tests/Feature/Auth/RegistrationTest.php
 vendor/bin/pint --dirty --format agent
 vendor/bin/phpstan analyse --debug --no-progress
 php artisan view:cache
@@ -188,11 +203,18 @@ php artisan route:list
 
 ข้อจำกัดเดิมที่ทราบ:
 
-- `tests/Pest.php` ยัง comment global `RefreshDatabase` ไว้ tests ใหม่สองไฟล์ใช้ trait ของตนเอง ส่วน tests เดิมบางไฟล์เคยล้มเพราะไม่มีตาราง users ใน SQLite in-memory
+- `tests/Pest.php` ยัง comment global `RefreshDatabase` ไว้ `MembershipApplicationTest`, `AdminMembershipTest` และ `Auth/RegistrationTest` ใช้ trait ของตนเองแล้ว ส่วน tests เดิมอื่น ๆ บางไฟล์เคยล้มเพราะไม่มีตาราง users ใน SQLite in-memory
 - `AGENTS.md` อ้างถึง skill `testing-best-practices` แต่ไม่พบในตำแหน่งที่ตรวจระหว่างงาน ควรตรวจความพร้อมของ skill นี้บนเครื่องใหม่
 - Build มีคำเตือน optional `fontaine` ของ font fallback; build สำเร็จ และยังไม่ได้เพิ่ม dependency
 - บางข้อความ validation เกี่ยวกับ Password rule และธีมของ component ภายนอกควรตรวจผ่าน UI จริงเพิ่มเติม
 
+## เงื่อนไขรหัสผ่านล่าสุด
+
+- ความยาวขั้นต่ำ 8 ตัวอักษร เปลี่ยนจาก 12 ใน Production ใน `AppServiceProvider`
+- เงื่อนไข Production อื่นยังคงอยู่: ตัวพิมพ์ใหญ่/เล็ก ตัวอักษร ตัวเลข สัญลักษณ์ และตรวจรหัสผ่านรั่วไหล ไม่ใช่การอนุญาตรหัสผ่านทุกแบบที่ยาว 8 ตัว
+- `CreateNewUser` ส่งข้อความความยาวเป็นไทย: “รหัสผ่านต้องมีความยาวอย่างน้อย :min ตัวอักษร”
+- หน้าสร้างบัญชีมี minlength 8 และ placeholder อธิบายขั้นต่ำ
+- Password defaults ใช้ร่วมกับการตั้ง/เปลี่ยนรหัสผ่านในระบบ แต่การเพิ่มข้อความไทยครั้งล่าสุดทำเฉพาะการสร้างบัญชี อย่าสรุปว่า validation ทุกหน้าถูกแปลครบเพราะการเปลี่ยนนี้
 ## งานถัดไป
 
 1. กระบวนการรับรองโดยนายทะเบียน/เลขานุการ ขอแก้ไขหรือปฏิเสธพร้อมเหตุผล และบันทึกผู้ดำเนินการ/เวลา
