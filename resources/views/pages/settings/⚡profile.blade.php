@@ -1,18 +1,46 @@
 <?php
 
 use App\Concerns\ProfileValidationRules;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile settings')] class extends Component {
+new #[Title('ตั้งค่าข้อมูลส่วนตัว')] class extends Component
+{
     use ProfileValidationRules;
 
+    /** @var array<string, string> */
+    protected $messages = [
+        'required' => 'กรุณากรอก:attribute',
+        'string' => ':attributeต้องเป็นข้อความ',
+        'email' => 'กรุณากรอกอีเมลให้ถูกต้อง',
+        'max.string' => ':attributeต้องมีความยาวไม่เกิน :max ตัวอักษร',
+        'unique' => 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+        'current_password' => 'รหัสผ่านปัจจุบันไม่ถูกต้อง',
+        'confirmed' => 'การยืนยันรหัสผ่านไม่ตรงกัน',
+        'password.min' => 'รหัสผ่านต้องมีความยาวอย่างน้อย :min ตัวอักษร',
+        'password.letters' => 'รหัสผ่านต้องมีตัวอักษรอย่างน้อยหนึ่งตัว',
+        'password.mixed' => 'รหัสผ่านต้องมีทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก',
+        'password.numbers' => 'รหัสผ่านต้องมีตัวเลขอย่างน้อยหนึ่งตัว',
+        'password.symbols' => 'รหัสผ่านต้องมีสัญลักษณ์อย่างน้อยหนึ่งตัว',
+        'password.uncompromised' => 'รหัสผ่านนี้เคยปรากฏในข้อมูลรั่วไหล กรุณาใช้รหัสผ่านอื่น',
+    ];
+
+    /** @var array<string, string> */
+    protected $validationAttributes = [
+        'name' => 'ชื่อ–นามสกุล',
+        'email' => 'อีเมล',
+        'current_password' => 'รหัสผ่านปัจจุบัน',
+        'password' => 'รหัสผ่าน',
+        'password_confirmation' => 'การยืนยันรหัสผ่าน',
+    ];
+
     public string $name = '';
+
     public string $email = '';
 
     /**
@@ -41,7 +69,7 @@ new #[Title('Profile settings')] class extends Component {
 
         $user->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        Flux::toast(variant: 'success', text: __('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว'));
     }
 
     /**
@@ -77,30 +105,31 @@ new #[Title('Profile settings')] class extends Component {
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+
+    <flux:heading level="2" class="sr-only">{{ __('ตั้งค่าข้อมูลส่วนตัว') }}</flux:heading>
+
+    <x-pages::settings.layout :show-sidebar="false" :heading="__('ข้อมูลส่วนตัว')" :subheading="__('แก้ไขชื่อและอีเมลสำหรับบัญชีของคุณ')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+            <flux:input wire:model="name" :label="__('ชื่อ–นามสกุล')" type="text" required autofocus autocomplete="name" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                <flux:input wire:model="email" :label="__('อีเมล')" type="email" required autocomplete="email" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>
                         <flux:text class="mt-4">
-                            {{ __('Your email address is unverified.') }}
+                            {{ __('อีเมลของคุณยังไม่ได้รับการยืนยัน') }}
 
                             <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
-                                {{ __('Click here to re-send the verification email.') }}
+                                {{ __('ส่งอีเมลยืนยันอีกครั้ง') }}
                             </flux:link>
                         </flux:text>
 
                         @if (session('status') === 'verification-link-sent')
                             <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
-                                {{ __('A new verification link has been sent to your email address.') }}
+                                {{ __('ส่งลิงก์ยืนยันไปยังอีเมลของคุณแล้ว') }}
                             </flux:text>
                         @endif
                     </div>
@@ -110,7 +139,7 @@ new #[Title('Profile settings')] class extends Component {
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
                     <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                        {{ __('Save') }}
+                        {{ __('บันทึกการเปลี่ยนแปลง') }}
                     </flux:button>
                 </div>
 

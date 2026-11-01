@@ -1,14 +1,31 @@
 @extends('layouts.public')
 @section('title', 'หน้าแรก')
 @section('content')
-    <section class="hero">
+    <section class="hero corporate-hero">
         <div class="landing-container hero-grid">
-            <div class="hero-copy"><p class="eyebrow"><span></span> ONCE A SciDI, ALWAYS A SciDI</p><h1>เชื่อมสายใยศิษย์เก่า<br>สร้างโอกาส<br><em>แห่งอนาคต<span>.</span></em></h1><p class="hero-description">พื้นที่ของคนวิทยาศาสตร์และนวัตกรรมดิจิทัล<br>ร่วมสานสัมพันธ์ แบ่งปันความรู้ และเติบโตไปด้วยกัน<br>กับสมาคมศิษย์เก่า มหาวิทยาลัยทักษิณ</p><div class="button-row"><a class="button button-blue" href="{{ route('membership') }}">ร่วมเป็นสมาชิก <span>↗</span></a><a class="text-link" href="{{ route('about') }}">รู้จักสมาคมของเรา <span>→</span></a></div><div class="hero-note"><span class="sun-mark">✳</span><span>ต่างรุ่น ต่างเส้นทาง<br><strong>ความผูกพันเดียวกัน</strong></span></div></div>
-            <div class="hero-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="art-label">SCIENCE · DIGITAL · CONNECTION</span><div class="logo-stage"><img src="{{ asset('images/logo.png') }}" alt="โลโก้สมาคม รูปวงโคจรอะตอม ดอกทานตะวัน และขวดวิทยาศาสตร์" width="440" height="440" fetchpriority="high"></div><div class="art-caption"><span class="caption-dot"></span><span>จุดเริ่มต้นของมิตรภาพ<br><strong>ที่ไม่สิ้นสุดเมื่อเรียนจบ</strong></span><span class="caption-arrow">↗</span></div><span class="art-star">✳</span></div>
+            <div class="hero-copy">
+                <p class="eyebrow">SCIDI–TSU ALUMNI ASSOCIATION</p>
+                <h1>เครือข่ายแห่งความรู้<br>สายสัมพันธ์<span class="blue-text">ที่ยั่งยืน</span></h1>
+                <p class="corporate-intro">สมาคมศิษย์เก่าคณะวิทยาศาสตร์และนวัตกรรมดิจิทัล<br>มหาวิทยาลัยทักษิณ</p>
+                <p class="hero-description">เชื่อมโยงศิษย์เก่าทุกรุ่น ส่งต่อประสบการณ์ และร่วมสร้างโอกาส<br>เพื่อขับเคลื่อนคณะ ชุมชน และสังคมไปข้างหน้าด้วยกัน</p>
+                <div class="button-row">
+                    <a class="button button-blue" href="{{ route('membership') }}">ร่วมเป็นสมาชิก <span aria-hidden="true">↗</span></a>
+                    <a class="button button-outline" href="{{ route('about') }}">รู้จักสมาคม</a>
+                </div>
+                <div class="hero-affiliation"><span></span> SCIENCE & DIGITAL INNOVATION · THAKSIN UNIVERSITY</div>
+            </div>
+            <div class="corporate-identity">
+                <span class="identity-kicker">OUR IDENTITY</span>
+                <img src="{{ asset('images/logo.png') }}" alt="ตราสมาคมศิษย์เก่า SciDI-TSU AA" width="360" height="360" fetchpriority="high">
+                <div class="identity-caption"><strong>เชื่อมความสัมพันธ์ สร้างคุณค่าร่วมกัน</strong><span>Faculty of Science and Digital Innovation<br>Thaksin University Alumni Association</span></div>
+            </div>
         </div>
     </section>
-    <div class="values-strip"><div class="landing-container"><span>สายใยแห่งความผูกพัน</span><i>✳</i><span>เครือข่ายแห่งโอกาส</span><i>✳</i><span>พลังแห่งการแบ่งปัน</span><i>✳</i><span>SciDI COMMUNITY</span></div></div>
-
+    <section class="corporate-services landing-container" aria-label="บริการและข้อมูลสมาคม">
+        <a href="{{ route('membership') }}"><span class="service-number">01 / MEMBERSHIP</span><strong>เป็นส่วนหนึ่งของสมาคม <span aria-hidden="true">↗</span></strong><p>ประเภทสมาชิกและการเข้าร่วมเครือข่าย</p></a>
+        <a href="{{ route('events') }}"><span class="service-number">02 / CONNECTION</span><strong>เชื่อมต่อผ่านกิจกรรม <span aria-hidden="true">↗</span></strong><p>พบปะ แลกเปลี่ยน และส่งต่อประสบการณ์</p></a>
+        <a href="{{ route('documents') }}"><span class="service-number">03 / TRANSPARENCY</span><strong>ข้อมูลและเอกสารสมาคม <span aria-hidden="true">↗</span></strong><p>ข้อบังคับและรายงานการประชุม</p></a>
+    </section>
     @include('partials.public-news')
     @include('partials.public-events')
 @endsection

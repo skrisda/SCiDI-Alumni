@@ -3,7 +3,8 @@ const fontControls = document.querySelector('.font-controls');
 if (fontControls) {
     const storageKey = 'scidi-font-scale';
     const sizes = [0.9, 1, 1.1, 1.2, 1.3];
-    let selectedSize = 1;
+    const defaultSize = 1;
+    let selectedSize = defaultSize;
 
     try {
         const savedSize = Number(localStorage.getItem(storageKey));
@@ -29,7 +30,7 @@ if (fontControls) {
 
         const index = sizes.indexOf(selectedSize);
         const action = button.dataset.fontAction;
-        selectedSize = action === 'reset' ? 1 : sizes[Math.max(0, Math.min(sizes.length - 1, index + (action === 'increase' ? 1 : -1)))];
+        selectedSize = action === 'reset' ? defaultSize : sizes[Math.max(0, Math.min(sizes.length - 1, index + (action === 'increase' ? 1 : -1)))];
         applySize();
 
         try {
@@ -40,4 +41,18 @@ if (fontControls) {
     });
 
     applySize();
+}
+
+const prefixSelect = document.querySelector('[data-prefix-select]');
+if (prefixSelect) {
+    const otherField = document.getElementById('application-prefix-other-field');
+    const otherInput = document.getElementById('application-prefix-other');
+    const updatePrefixField = () => {
+        const isOther = prefixSelect.value === 'other';
+        otherField.hidden = !isOther;
+        otherInput.disabled = !isOther;
+        otherInput.required = isOther;
+    };
+    prefixSelect.addEventListener('change', updatePrefixField);
+    updatePrefixField();
 }

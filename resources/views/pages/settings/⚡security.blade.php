@@ -10,22 +10,46 @@ use Laravel\Fortify\Fortify;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Security settings')] class extends Component {
+new #[Title('ตั้งค่าความปลอดภัย')] class extends Component
+{
     use PasswordValidationRules;
 
+    /** @var array<string, string> */
+    protected $messages = [
+        'required' => 'กรุณากรอก:attribute',
+        'string' => ':attributeต้องเป็นข้อความ',
+        'email' => 'กรุณากรอกอีเมลให้ถูกต้อง',
+        'max.string' => ':attributeต้องมีความยาวไม่เกิน :max ตัวอักษร',
+        'unique' => 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+        'current_password' => 'รหัสผ่านปัจจุบันไม่ถูกต้อง',
+        'confirmed' => 'การยืนยันรหัสผ่านไม่ตรงกัน',
+        'password.min' => 'รหัสผ่านต้องมีความยาวอย่างน้อย :min ตัวอักษร',
+        'password.letters' => 'รหัสผ่านต้องมีตัวอักษรอย่างน้อยหนึ่งตัว',
+        'password.mixed' => 'รหัสผ่านต้องมีทั้งตัวพิมพ์ใหญ่และตัวพิมพ์เล็ก',
+        'password.numbers' => 'รหัสผ่านต้องมีตัวเลขอย่างน้อยหนึ่งตัว',
+        'password.symbols' => 'รหัสผ่านต้องมีสัญลักษณ์อย่างน้อยหนึ่งตัว',
+        'password.uncompromised' => 'รหัสผ่านนี้เคยปรากฏในข้อมูลรั่วไหล กรุณาใช้รหัสผ่านอื่น',
+    ];
+
+    /** @var array<string, string> */
+    protected $validationAttributes = [
+        'name' => 'ชื่อ–นามสกุล',
+        'email' => 'อีเมล',
+        'current_password' => 'รหัสผ่านปัจจุบัน',
+        'password' => 'รหัสผ่าน',
+        'password_confirmation' => 'การยืนยันรหัสผ่าน',
+    ];
+
     public string $current_password = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
-
-
 
     /**
      * Mount the component.
      */
-    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
-    {
-
-    }
+    public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void {}
 
     /**
      * Update the password for the currently authenticated user.
@@ -49,22 +73,20 @@ new #[Title('Security settings')] class extends Component {
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
-        Flux::toast(variant: 'success', text: __('Password updated.'));
+        Flux::toast(variant: 'success', text: __('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว'));
     }
-
-
 }; ?>
 
 <section class="w-full">
-    @include('partials.settings-heading')
 
-    <flux:heading level="2" class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <flux:heading level="2" class="sr-only">{{ __('ตั้งค่าความปลอดภัย') }}</flux:heading>
+
+    <x-pages::settings.layout :show-sidebar="false" :heading="__('เปลี่ยนรหัสผ่าน')" :subheading="__('เลือกรหัสผ่านที่ยาวและคาดเดาได้ยากเพื่อความปลอดภัยของบัญชี')">
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"
-                :label="__('Current password')"
+                :label="__('รหัสผ่านปัจจุบัน')"
                 type="password"
                 required
                 autocomplete="current-password"
@@ -72,7 +94,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password"
-                :label="__('New password')"
+                :label="__('รหัสผ่านใหม่')"
                 type="password"
                 required
                 autocomplete="new-password"
@@ -81,7 +103,7 @@ new #[Title('Security settings')] class extends Component {
             />
             <flux:input
                 wire:model="password_confirmation"
-                :label="__('Confirm password')"
+                :label="__('ยืนยันรหัสผ่านใหม่')"
                 type="password"
                 required
                 autocomplete="new-password"
@@ -91,7 +113,7 @@ new #[Title('Security settings')] class extends Component {
 
             <div class="flex items-center gap-4">
                 <flux:button variant="primary" type="submit" data-test="update-password-button">
-                    {{ __('Save') }}
+                    {{ __('บันทึกการเปลี่ยนแปลง') }}
                 </flux:button>
             </div>
         </form>

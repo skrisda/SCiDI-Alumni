@@ -1,0 +1,137 @@
+<?php
+
+use App\Models\MembershipApplication;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+uses(RefreshDatabase::class);
+
+function membershipApplicationData(): array
+{
+    return [
+        'membership_type' => 'ordinary',
+        'prefix' => 'นาย',
+        'first_name' => 'ทดสอบ',
+        'last_name' => 'ระบบ',
+        'program' => 'วิทยาการคอมพิวเตอร์',
+        'national_id' => '1101700207030',
+        'address' => '222 จังหวัดพัทลุง',
+        'phone' => '0812345678',
+        'qualification' => 'สำเร็จการศึกษาจากคณะวิทยาศาสตร์',
+        'acknowledged' => '1',
+    ];
+}
+
+test('membership application requires a verified account', function () {
+    $this->get(route('membership.application'))->assertRedirect(route('login'));
+    $this->actingAs(User::factory()->unverified()->create())
+        ->get(route('membership.application'))->assertRedirect(route('verification.notice'));
+});
+
+test('verified users can submit encrypted membership applications with server controlled fees', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user)->get(route('membership.application'))->assertOk()->assertSee('สมัครสมาชิกสมาคม');
+    $this->post(route('membership.application.store'), array_merge(membershipApplicationData(), [
+        'fee_amount' => 0, 'status' => 'approved', 'email' => 'forged@example.com',
+    ]))->assertSessionHasNoErrors()->assertRedirect(route('membership.application'));
+
+    $application = MembershipApplication::sole();
+    expect($application->fee_amount)->toBe(100)
+        ->and($application->status)->toBe('pending_review')
+        ->and($application->email)->toBe($user->email)
+        ->and($application->national_id)->toBe('1101700207030')
+        ->and(DB::table('membership_applications')->value('national_id'))->not->toBe('1101700207030');
+    $this->get(route('membership.application'))->assertOk()->assertSee('รับคำขอสมัครแล้ว')->assertDontSee('1101700207030');
+});
+
+test('membership fees follow the selected type without guessing associate fees', function (string $type, ?int $fee) {
+    $this->actingAs(User::factory()->create())->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['membership_type' => $type]))->assertSessionHasNoErrors();
+    expect(MembershipApplication::sole()->fee_amount)->toBe($fee);
+})->with([['extraordinary', 300], ['associate', null]]);
+
+test('invalid identities and invitation only types are rejected', function () {
+    $this->actingAs(User::factory()->create())->post(route('membership.application.store'), array_replace(membershipApplicationData(), [
+        'national_id' => '1101700207031', 'membership_type' => 'honorary',
+    ]))->assertSessionHasErrors(['national_id', 'membership_type']);
+    $this->assertDatabaseCount('membership_applications', 0);
+});
+
+test('each account and national identity can submit only one application', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user)->post(route('membership.application.store'), membershipApplicationData())->assertSessionHasNoErrors();
+    $this->post(route('membership.application.store'), membershipApplicationData())->assertForbidden();
+    $this->actingAs(User::factory()->create())->post(route('membership.application.store'), membershipApplicationData())->assertSessionHasErrors('national_id');
+    $this->assertDatabaseCount('membership_applications', 1);
+});
+
+test('payment evidence is stored privately and never activates membership', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $application = MembershipApplication::factory()->for($user)->create();
+    $this->actingAs($user)->post(route('membership.slip.store'), [
+        'slip' => UploadedFile::fake()->create('slip.pdf', 100, 'application/pdf'),
+    ])->assertSessionHasNoErrors()->assertRedirect(route('membership.application'));
+    $application->refresh();
+    Storage::disk('local')->assertExists($application->slip_path);
+    expect($application->payment_status)->toBe('pending_verification')->and($application->status)->toBe('pending_review');
+    $this->get(route('membership.slip.download'))->assertOk();
+    $this->post(route('membership.slip.store'), ['slip' => UploadedFile::fake()->create('again.pdf', 100, 'application/pdf')])->assertForbidden();
+    $this->actingAs(User::factory()->create())->get(route('membership.slip.download'))->assertNotFound();
+});
+
+test('slips reject unsupported files and oversized files', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    MembershipApplication::factory()->for($user)->create();
+    $this->actingAs($user)->post(route('membership.slip.store'), ['slip' => UploadedFile::fake()->create('script.html', 10, 'text/html')])->assertSessionHasErrors('slip');
+    $this->post(route('membership.slip.store'), ['slip' => UploadedFile::fake()->create('large.pdf', 5121, 'application/pdf')])->assertSessionHasErrors('slip');
+    expect(Storage::disk('local')->allFiles())->toBeEmpty();
+});
+
+test('associate applications cannot submit payments before fees are confirmed', function () {
+    $user = User::factory()->create();
+    MembershipApplication::factory()->for($user)->create(['membership_type' => 'associate', 'fee_amount' => null]);
+    $this->actingAs($user)->post(route('membership.slip.store'), ['slip' => UploadedFile::fake()->create('slip.pdf', 100, 'application/pdf')])->assertForbidden();
+});
+
+test('custom prefixes are required when other is selected and saved as the actual title', function () {
+    $this->actingAs(User::factory()->create());
+    $this->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['prefix' => 'other']))->assertSessionHasErrors('prefix_other');
+    $this->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['prefix' => 'other', 'prefix_other' => 'ดร.']))->assertSessionHasNoErrors();
+    expect(MembershipApplication::sole()->prefix)->toBe('ดร.');
+});
+
+test('predefined prefixes ignore custom input and unsupported selections are rejected', function () {
+    $this->actingAs(User::factory()->create());
+    $this->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['prefix' => 'unsupported']))->assertSessionHasErrors('prefix');
+    $this->post(route('membership.application.store'), array_replace(membershipApplicationData(), ['prefix' => 'นางสาว', 'prefix_other' => 'ignored']))->assertSessionHasNoErrors();
+    expect(MembershipApplication::sole()->prefix)->toBe('นางสาว');
+});
+
+test('application form prefills account names while keeping multipart surnames', function () {
+    $this->actingAs(User::factory()->create(['name' => '  สมชาย   นามสกุล เพิ่มเติม  ']))
+        ->get(route('membership.application'))
+        ->assertOk()
+        ->assertSee('value="สมชาย"', false)
+        ->assertSee('value="นามสกุล เพิ่มเติม"', false);
+});
+
+test('application form keeps corrected names after validation errors', function () {
+    $this->actingAs(User::factory()->create(['name' => 'ชื่อเดิม นามสกุลเดิม']))
+        ->withSession(['_old_input' => ['first_name' => 'ชื่อแก้ไข', 'last_name' => 'นามสกุลแก้ไข']])
+        ->get(route('membership.application'))
+        ->assertOk()
+        ->assertSee('value="ชื่อแก้ไข"', false)
+        ->assertSee('value="นามสกุลแก้ไข"', false);
+});
+
+test('single account names leave the surname empty for the applicant to complete', function () {
+    $this->actingAs(User::factory()->create(['name' => 'สมชาย']))
+        ->get(route('membership.application'))
+        ->assertOk()
+        ->assertViewHas('defaultFirstName', 'สมชาย')
+        ->assertViewHas('defaultLastName', '');
+});

@@ -1,5 +1,4 @@
-<div class="relative mb-6 w-full">
-    <flux:heading size="xl" level="1">{{ __('Settings') }}</flux:heading>
-    <flux:subheading size="lg" class="mb-6">{{ __('Manage your profile and account settings') }}</flux:subheading>
-    <flux:separator variant="subtle" />
+<div class="settings-page-heading">
+    <div><p class="eyebrow">SCIDI–TSU AA / ACCOUNT SETTINGS</p><flux:heading size="xl" level="1">ตั้งค่าบัญชี</flux:heading><flux:subheading>จัดการข้อมูลส่วนตัว ความปลอดภัย และการแสดงผลของคุณ</flux:subheading></div>
+    <a class="button button-outline" href="{{ route('dashboard') }}">กลับพื้นที่ผู้ใช้ <span aria-hidden="true">→</span></a>
 </div>
